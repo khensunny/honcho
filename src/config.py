@@ -213,6 +213,9 @@ class LLMSettings(HonchoSettings):
     VLLM_API_KEY: str | None = None
     VLLM_BASE_URL: str | None = None
 
+    # GitHub Copilot
+    COPILOT_GITHUB_TOKEN: str | None = None
+
     EMBEDDING_PROVIDER: Literal["openai", "gemini", "openrouter"] = "openai"
 
     # General LLM settings

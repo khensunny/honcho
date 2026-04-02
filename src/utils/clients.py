@@ -26,6 +26,11 @@ from src.config import LLMComponentSettings, settings
 from src.exceptions import LLMError
 from src.telemetry.logging import conditional_observe
 from src.telemetry.reasoning_traces import log_reasoning_trace
+from src.utils.copilot_auth import (
+    COPILOT_API_BASE_URL,
+    copilot_default_headers,
+    resolve_copilot_token,
+)
 from src.utils.json_parser import validate_and_repair_json
 from src.utils.representation import PromptRepresentation
 from src.utils.tokens import estimate_tokens
@@ -284,6 +289,23 @@ if settings.LLM.GROQ_API_KEY:
     groq = AsyncGroq(api_key=settings.LLM.GROQ_API_KEY)
     CLIENTS["groq"] = groq
 
+# GitHub Copilot (OpenAI-compatible with session token exchange)
+_copilot_token = resolve_copilot_token(settings.LLM.COPILOT_GITHUB_TOKEN)
+if _copilot_token:
+    _copilot_configured_token = settings.LLM.COPILOT_GITHUB_TOKEN
+
+    async def _copilot_api_key() -> str:
+        token = resolve_copilot_token(_copilot_configured_token)
+        if not token:
+            raise ValueError("Failed to resolve Copilot session token")
+        return token
+
+    CLIENTS["copilot"] = AsyncOpenAI(
+        api_key=_copilot_api_key,
+        base_url=COPILOT_API_BASE_URL,
+        default_headers=copilot_default_headers(),
+    )
+
 SELECTED_PROVIDERS = [
     ("Summary", settings.SUMMARY.PROVIDER),
     ("Deriver", settings.DERIVER.PROVIDER),
@@ -334,9 +356,9 @@ def convert_tools_for_provider(
     if provider == "anthropic":
         # Anthropic format: input_schema
         return tools
-    elif provider in ("openai", "custom", "vllm"):
+    elif provider in ("openai", "custom", "vllm", "copilot"):
         # OpenAI format: parameters instead of input_schema
-        # custom and vllm use AsyncOpenAI client so need OpenAI format
+        # custom, vllm, and copilot use AsyncOpenAI client so need OpenAI format
         return [
             {
                 "type": "function",
