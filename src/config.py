@@ -216,7 +216,9 @@ class LLMSettings(HonchoSettings):
     # GitHub Copilot
     COPILOT_GITHUB_TOKEN: str | None = None
 
-    EMBEDDING_PROVIDER: Literal["openai", "gemini", "openrouter"] = "openai"
+    EMBEDDING_PROVIDER: Literal["openai", "gemini", "openrouter", "local"] = "openai"
+    EMBEDDING_BASE_URL: str | None = None
+    EMBEDDING_MODEL: str | None = None
 
     # General LLM settings
     DEFAULT_MAX_TOKENS: Annotated[int, Field(default=1000, gt=0, le=100_000)] = 2500

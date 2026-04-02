@@ -55,6 +55,19 @@ class _EmbeddingClient:
             self.model = "openai/text-embedding-3-small"
             self.max_embedding_tokens = settings.MAX_EMBEDDING_TOKENS
             self.max_batch_size = 2048  # Same as OpenAI
+        elif self.provider == "local":
+            base_url = settings.LLM.EMBEDDING_BASE_URL
+            if not base_url:
+                raise ValueError(
+                    "LLM_EMBEDDING_BASE_URL is required for local embedding provider"
+                )
+            self.client = AsyncOpenAI(
+                api_key="no-key",
+                base_url=base_url,
+            )
+            self.model = settings.LLM.EMBEDDING_MODEL or "local-model"
+            self.max_embedding_tokens = settings.MAX_EMBEDDING_TOKENS
+            self.max_batch_size = 512
         else:  # openai
             if api_key is None:
                 api_key = settings.LLM.OPENAI_API_KEY
@@ -382,6 +395,8 @@ class EmbeddingClient:
                         api_key = settings.LLM.GEMINI_API_KEY
                     elif provider == "openrouter":
                         api_key = settings.LLM.OPENAI_COMPATIBLE_API_KEY
+                    elif provider == "local":
+                        api_key = "no-key"
                     else:
                         api_key = settings.LLM.OPENAI_API_KEY
 
